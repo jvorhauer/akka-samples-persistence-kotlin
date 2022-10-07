@@ -20,6 +20,6 @@ To run the tests, enter:
 mvn test
 ```
 
-The `ShoppingCart` application is expanded further in the `akka-sample-cqrs-java` sample. 
+The `ShoppingCart` application is expanded further in the [akka-sample-cqrs-java](https://developer.lightbend.com/docs/akka-platform-guide/microservices-tutorial/) sample. 
 In that sample the events are tagged to be consumed by even processors to build other representations from the events,
 or publish the events to other services.

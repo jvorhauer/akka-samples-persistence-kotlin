@@ -45,6 +45,18 @@ class MainTests {
   }
 
   @Test
+  fun `should adjust item quantity`() {
+    val cart = testKit.spawn(ShoppingCart.create(newCartId()))
+    val probe = testKit.createTestProbe<StatusReply<Summary>>()
+    cart.tell(AddItem("foo", 42, probe.ref))
+    assertThat(probe.receiveMessage().isSuccess).isTrue
+    cart.tell(AdjustItemQuantity("foo", 43, probe.ref))
+    val result = probe.receiveMessage()
+    assertThat(result.isSuccess).isTrue
+    assertThat(result.value.items["foo"]).isEqualTo(43)
+  }
+
+  @Test
   fun `should remove item`() {
     val cart = testKit.spawn(ShoppingCart.create(newCartId()))
     val probe = testKit.createTestProbe<StatusReply<Summary>>()
@@ -68,11 +80,45 @@ class MainTests {
   }
 
   @Test
+  fun `adjust item with negative quantity should remove item`() {
+    val cart = testKit.spawn(ShoppingCart.create(newCartId()))
+    val probe = testKit.createTestProbe<StatusReply<Summary>>()
+    cart.tell(AddItem("foo", 42, probe.ref))
+    assertThat(probe.receiveMessage().isSuccess).isTrue
+    cart.tell(AdjustItemQuantity("foo", -5, probe.ref))
+    val result = probe.receiveMessage()
+    assertThat(result.isSuccess).isTrue
+    assertThat(result.value.isEmpty()).isTrue
+  }
+
+  @Test
   fun `should check out`() {
     val cart = testKit.spawn(ShoppingCart.create(newCartId()))
     val probe = testKit.createTestProbe<StatusReply<Summary>>()
     cart.tell(AddItem("foo", 42, probe.ref))
     assertThat(probe.receiveMessage().isSuccess).isTrue
+    cart.tell(Checkout(probe.ref))
+    val result = probe.receiveMessage()
+    assertThat(result.isSuccess).isTrue
+    assertThat(result.value.checkedOut).isTrue
+  }
+
+  @Test
+  fun `should not check out twice`() {
+    val cart = testKit.spawn(ShoppingCart.create(newCartId()))
+    val probe = testKit.createTestProbe<StatusReply<Summary>>()
+    cart.tell(AddItem("foo", 42, probe.ref))
+    assertThat(probe.receiveMessage().isSuccess).isTrue
+    cart.tell(Checkout(probe.ref))
+    val result = probe.receiveMessage()
+    assertThat(result.isSuccess).isTrue
+    assertThat(result.value.checkedOut).isTrue
+
+    cart.tell(Checkout(probe.ref))
+    assertThat(probe.receiveMessage().isError).isTrue
+
+    cart.tell(AddItem("bar", 11, probe.ref))
+    assertThat(probe.receiveMessage().isError).isTrue
   }
 
   @Test
