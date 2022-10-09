@@ -1,5 +1,3 @@
-@file:Suppress("UNCHECKED_CAST")
-
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.actor.typed.SupervisorStrategy
@@ -30,10 +28,10 @@ data class State(val items: MutableMap<String, Int> = mutableMapOf(), var checko
 }
 
 
-private fun pid(id: String): PersistenceId = PersistenceId.of("ShoppingCart", id)
-private val supervisorStrategy = SupervisorStrategy.restartWithBackoff(Duration.ofMillis(200), Duration.ofSeconds(5), 0.1)
+private fun pid(id: String) = PersistenceId.of("ShoppingCart", id)
+private val strategy = SupervisorStrategy.restartWithBackoff(Duration.ofMillis(200), Duration.ofSeconds(5), 0.1)
 
-class ShoppingCart(private val cartId: String) : EventSourcedBehavior<Command, Event, State>(pid(cartId), supervisorStrategy) {
+class ShoppingCart(private val cartId: String) : EventSourcedBehavior<Command, Event, State>(pid(cartId), strategy) {
 
   override fun emptyState(): State = State()
 
@@ -41,23 +39,22 @@ class ShoppingCart(private val cartId: String) : EventSourcedBehavior<Command, E
 
   private fun <T> err(msg: String) = StatusReply.error<T>(msg)
 
-  override fun commandHandler(): CommandHandler<Command, Event, State> {
-    val cmb = newCommandHandlerBuilder()
-    cmb.forState { state -> !state.isCheckedOut() }
+  override fun commandHandler(): CommandHandler<Command, Event, State> = newCommandHandlerBuilder().let {
+    it.forState { state -> !state.isCheckedOut() }
       .onCommand(AddItem::class.java, this::onAddItem)
       .onCommand(RemoveItem::class.java, this::onRemoveItem)
       .onCommand(AdjustItemQuantity::class.java, this::onAdjustQuantity)
       .onCommand(Checkout::class.java, this::onCheckout)
 
-    cmb.forState { state -> state.isCheckedOut() }
+    it.forState { state -> state.isCheckedOut() }
       .onCommand(AddItem::class.java, this::onCheckedOut)
       .onCommand(RemoveItem::class.java, this::onCheckedOut)
       .onCommand(AdjustItemQuantity::class.java, this::onCheckedOut)
       .onCommand(Checkout::class.java, this::onCheckedOut)
 
-    cmb.forAnyState().onCommand(Get::class.java, this::onGet)
+    it.forAnyState().onCommand(Get::class.java, this::onGet)
 
-    return cmb.build()
+    return it.build()
   }
 
   private fun onAddItem(state: State, cmd: AddItem): Effect<Event, State> =
