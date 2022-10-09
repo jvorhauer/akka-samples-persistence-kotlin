@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
-class MainTests {
+class ShoppingCartTests {
   private val counter = AtomicInteger()
   private val testKit = TestKitJunitResource(
     """akka.persistence.journal.plugin = "akka.persistence.journal.inmem" 
