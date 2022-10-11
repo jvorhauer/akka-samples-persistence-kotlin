@@ -23,7 +23,7 @@ dependencies {
 
   implementation("com.typesafe.akka:akka-persistence-typed_2.13")
   implementation("com.typesafe.akka:akka-serialization-jackson_2.13")
-  implementation("org.scala-lang:scala-library:2.13.9")
+  implementation("org.scala-lang:scala-library:2.13.10")
   implementation("ch.qos.logback:logback-classic:1.2.11")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.4")
   implementation("org.jetbrains.kotlin:kotlin-reflect")

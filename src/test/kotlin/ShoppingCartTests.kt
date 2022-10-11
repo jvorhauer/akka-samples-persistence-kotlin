@@ -1,9 +1,12 @@
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource
+import akka.actor.typed.javadsl.AskPattern.ask
 import akka.pattern.StatusReply
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
+
 
 class ShoppingCartTests {
   private val counter = AtomicInteger()
@@ -24,6 +27,15 @@ class ShoppingCartTests {
     val result = probe.receiveMessage()
     assertThat(result.isSuccess).isTrue
     assertThat(result.value.items["foo"]).isEqualTo(42)
+  }
+
+  @Test
+  fun `ask for an additional item`() {
+    val cart = testKit.spawn(ShoppingCart.create(newCartId()))
+    val result = ask(cart, { replyTo -> AddItem("foo", 42, replyTo) }, Duration.ofSeconds(2), testKit.scheduler())
+    val t = result.toCompletableFuture().get()
+    assertThat(t.isSuccess).isTrue
+    assertThat(t.value.items.containsKey("foo")).isTrue
   }
 
   @Test

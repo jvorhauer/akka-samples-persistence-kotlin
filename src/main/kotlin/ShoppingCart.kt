@@ -62,13 +62,13 @@ class ShoppingCart(private val cartId: String) : EventSourcedBehavior<Command, E
       state.hasItem(cmd.id) -> Effect().none().thenRun { cmd.replyTo.tell(StatusReply.error("${cmd.id} already in cart")) }
       cmd.quantity <= 0 -> Effect().none().thenRun { cmd.replyTo.tell(StatusReply.error("quantity must be more than 0")) }
       else -> Effect().persist(ItemAdded(cartId, cmd.id, cmd.quantity))
-        .thenRun { newState: State -> cmd.replyTo.tell(StatusReply.success(newState.toSummary())) }
+        .thenRun { s: State -> cmd.replyTo.tell(StatusReply.success(s.toSummary())) }
     }
 
   private fun onRemoveItem(state: State, cmd: RemoveItem): Effect<Event, State> =
     when {
       state.hasItem(cmd.id) -> Effect().persist(ItemRemoved(cartId, cmd.id))
-        .thenRun { newState: State -> cmd.replyTo.tell(StatusReply.success(newState.toSummary())) }
+        .thenRun { s: State -> cmd.replyTo.tell(StatusReply.success(s.toSummary())) }
 
       else -> Effect().none().thenRun { cmd.replyTo.tell(StatusReply.error("can't remove ${cmd.id}: not in cart")) }
     }
